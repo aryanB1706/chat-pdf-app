@@ -89,9 +89,9 @@ chat-pdf-app/
 │   ├── utils/              # PDF Parsing Utilities
 │   └── index.js            # Server Entry Point
 
+```
 
-
-⚙️ Installation & Run Locally
+## ⚙️ Installation & Run Locally
 
 Follow these steps to set up the project on your local machine.
 
@@ -103,13 +103,13 @@ Google Gemini API Key
 
 (Optional) ElevenLabs API Key
 
-1. Clone the Repository
+## 1. Clone the Repository
 
 git clone [https://github.com/YOUR_GITHUB_USERNAME/chat-pdf-app.git](https://github.com/YOUR_GITHUB_USERNAME/chat-pdf-app.git)
 cd chat-pdf-app
 
 
-2. Backend Setup
+## 2. Backend Setup
 
 cd server
 npm install
@@ -127,7 +127,7 @@ Start the Server:
 node index.js
 
 
-3. Frontend Setup
+## 3. Frontend Setup
 
 Open a new terminal:
 
