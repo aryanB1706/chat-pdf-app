@@ -53,7 +53,7 @@ function App() {
       formData.append("file", selectedFile);
       try {
         setLoading(true);
-        const res = await axios.post("http://localhost:5000/upload", formData);
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData);
         setNumPages(res.data.totalPages);
         setMessages(prev => [...prev, { role: 'bot', text: `PDF Processed! Detected ${res.data.totalPages} pages.` }]);
       } catch (err) { alert("Upload failed"); } finally { setLoading(false); }
@@ -86,10 +86,10 @@ function App() {
       if (mode === 'crop') {
         const base64 = await getCroppedImg();
         if (!base64) { alert("Select area first!"); setLoading(false); return; }
-        response = await axios.post("http://localhost:5000/analyze-crop", { image: base64, question: userMsg });
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/analyze-crop`, { image: base64, question: userMsg });
         setCrop(undefined);
       } else {
-        response = await axios.post("http://localhost:5000/chat", { question: userMsg });
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, { question: userMsg });
       }
       setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
     } catch (error) { setMessages(prev => [...prev, { role: "bot", text: "Error fetching response." }]); } finally { setLoading(false); }
@@ -98,7 +98,7 @@ function App() {
   const generateQuiz = async () => {
     setLoading(true);
     try {
-        const res = await axios.post("http://localhost:5000/quiz");
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/quiz`);
         setQuizData(res.data);
         setQuizAnswers({});
     } catch (err) { alert("Quiz Gen Error"); } finally { setLoading(false); }
@@ -107,7 +107,7 @@ function App() {
   const generateMindMap = async () => {
     setLoading(true);
     try {
-        const res = await axios.post("http://localhost:5000/mindmap");
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/mindmap`);
         setMindMapNodes(res.data.nodes || []);
         setMindMapEdges(res.data.edges || []);
     } catch (err) { alert("Mind Map Error"); } finally { setLoading(false); }
@@ -116,7 +116,7 @@ function App() {
   const generatePodcast = async () => {
     setLoading(true);
     try {
-        const res = await axios.post("http://localhost:5000/podcast", { language: podcastLang });
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/podcast`, { language: podcastLang });
         setPodcastScript(res.data.script);
     } catch (err) { alert("Podcast Error"); } finally { setLoading(false); }
   };
