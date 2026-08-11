@@ -11,6 +11,15 @@ class Settings(BaseSettings):
     upload_dir: str = "/tmp/chatpdf_uploads"
     max_upload_mb: int = 100
 
+    # Celery (Phase 2)
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/1"
+
+    # Ingestion chunking (Phase 2) — tuned for 500-page PDFs
+    chunk_size_chars: int = 1000
+    chunk_overlap_chars: int = 200
+    embedding_batch_size: int = 32
+
     # Filled in later phases (gateway / embeddings)
     gemini_api_key: str = ""
     primary_llm_model: str = "gemini-flash-latest"

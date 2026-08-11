@@ -7,3 +7,7 @@ pydantic==2.10.4
 pydantic-settings==2.7.0
 python-multipart==0.0.20
 redis==5.2.1
+celery==5.4.0
+pypdf==5.1.0
+google-generativeai==0.8.5
+numpy==1.26.4

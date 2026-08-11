@@ -56,11 +56,17 @@ def upload_document(
     db.add(doc)
     db.commit()
 
+    from .jobs import _enqueue
+
+    queued = _enqueue(doc.id)
+
     return schemas.UploadResponse(
         document_id=doc.id,
         filename=doc.filename,
         status=doc.status,
-        message="Upload accepted. Ingestion worker (Phase 2) will process it.",
+        message="Upload accepted. Ingestion worker (Phase 2) will process it."
+        if queued
+        else "Upload stored. Worker offline — retry via POST /documents/{id}/retry.",
     )
 
 
