@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import init_db
-from .routes import documents, health, jobs
+from .routes import ask, documents, health, jobs
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
         documents.router, prefix=settings.api_v1_prefix, tags=["documents"]
     )
     app.include_router(jobs.router, prefix=settings.api_v1_prefix, tags=["jobs"])
+    app.include_router(ask.router, prefix=settings.api_v1_prefix, tags=["agent"])
     return app
 
 
@@ -46,4 +47,5 @@ def root():
         "docs": "/docs",
         "health": "/health",
         "upload": f"{settings.api_v1_prefix}/documents/upload",
+        "ask": f"{settings.api_v1_prefix}/ask",
     }

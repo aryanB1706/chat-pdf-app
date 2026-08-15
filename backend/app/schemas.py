@@ -23,3 +23,23 @@ class UploadResponse(BaseModel):
     filename: str
     status: str
     message: str
+
+
+class AskRequest(BaseModel):
+    document_id: uuid.UUID
+    question: str
+    top_k: int = 5
+
+
+class Citation(BaseModel):
+    page: int
+    chunk_index: int
+    excerpt: str
+
+
+class AskResponse(BaseModel):
+    document_id: uuid.UUID
+    question: str
+    answer: str
+    citations: list[Citation]
+    tools_used: list[str]
