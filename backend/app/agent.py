@@ -46,14 +46,20 @@ def generate_text(question: str, chunks: list[dict], mode: str) -> str:
 
     if settings.gemini_api_key:
         try:
-            import google.generativeai as genai
+            from .gateway import generate as gateway_generate
 
-            if not getattr(generate_text, "_configured", False):
-                genai.configure(api_key=settings.gemini_api_key)
-                generate_text._configured = True  # type: ignore[attr-defined]
-            model = genai.GenerativeModel(settings.primary_llm_model)
-            prompt = f"{instruction}\n\nQuestion: {question}\n\nContext:\n{context[:15000]}"
-            return model.generate_content(prompt).text.strip()
+            prompt = (
+                f"{instruction}\n\nQuestion: {question}\n\n"
+                f"Context:\n{context[:15000]}"
+            )
+            text, model_used, fallback_used, _ms = gateway_generate(prompt)
+            generate_text.last_call = {  # type: ignore[attr-defined]
+                "model_used": model_used,
+                "fallback_used": fallback_used,
+                "latency_ms": _ms,
+                "prompt": prompt,
+            }
+            return text
         except Exception as e:
             print(f"[agent] LLM failed, extractive fallback: {e}")
 
@@ -85,8 +91,15 @@ def answer_question(
     """Assemble the structured JSON answer with page-level citations."""
     planned = tools_used or plan_tools(question)
     mode = "summarize" if "summarize" in planned else "compare" if "compare" in planned else "ask"
+    generate_text.last_call = None  # type: ignore[attr-defined]
+    answer = generate_text(question, chunks, mode)
+    meta = getattr(generate_text, "last_call", None)
     return {
-        "answer": generate_text(question, chunks, mode),
+        "answer": answer,
         "citations": build_citations(chunks),
         "tools_used": planned,
+        "model_used": (meta or {}).get("model_used", "extractive-fallback"),
+        "fallback_used": bool((meta or {}).get("fallback_used", False)),
+        "llm_latency_ms": float((meta or {}).get("latency_ms", 0.0)),
+        "prompt": (meta or {}).get("prompt", ""),
     }

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,3 +54,28 @@ class Chunk(Base):
     )
 
     document: Mapped[Document] = relationship("Document", back_populates="chunks")
+
+
+class QueryLog(Base):
+    """Per-request token/latency log (Phase 4). Powers /stats."""
+
+    __tablename__ = "query_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"),
+        nullable=True, index=True,
+    )
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    tools_used: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    model_used: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    fallback_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    cached: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    prompt_tokens_est: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completion_tokens_est: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.utcnow
+    )
