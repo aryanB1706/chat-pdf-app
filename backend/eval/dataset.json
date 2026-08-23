@@ -1,0 +1,22 @@
+[
+  {"id": 1, "question": "Where does photosynthesis occur and what captures sunlight?", "expected_pages": [1], "expected_keywords": ["chloroplasts", "chlorophyll"], "expected_tools": ["retrieve"]},
+  {"id": 2, "question": "What do the light reactions produce for the Calvin cycle?", "expected_pages": [1], "expected_keywords": ["ATP", "NADPH"], "expected_tools": ["retrieve"]},
+  {"id": 3, "question": "Where does the Krebs cycle run?", "expected_pages": [2], "expected_keywords": ["mitochondrial matrix", "Krebs"], "expected_tools": ["retrieve"]},
+  {"id": 4, "question": "What generates ATP through cellular respiration?", "expected_pages": [2], "expected_keywords": ["Mitochondria"], "expected_tools": ["retrieve"]},
+  {"id": 5, "question": "What does Newton's second law state?", "expected_pages": [3], "expected_keywords": ["mass times acceleration", "force"], "expected_tools": ["retrieve"]},
+  {"id": 6, "question": "What keeps objects moving at constant velocity?", "expected_pages": [3], "expected_keywords": ["Inertia"], "expected_tools": ["retrieve"]},
+  {"id": 7, "question": "How does transpiration affect the water cycle?", "expected_pages": [4], "expected_keywords": ["Transpiration", "moisture"], "expected_tools": ["retrieve"]},
+  {"id": 8, "question": "What returns water to oceans and aquifers?", "expected_pages": [4], "expected_keywords": ["Precipitation"], "expected_tools": ["retrieve"]},
+  {"id": 9, "question": "How does gradient descent update model weights?", "expected_pages": [5], "expected_keywords": ["backpropagation"], "expected_tools": ["retrieve"]},
+  {"id": 10, "question": "How is overfitting controlled in machine learning?", "expected_pages": [5], "expected_keywords": ["regularization"], "expected_tools": ["retrieve"]},
+  {"id": 11, "question": "What data structure speeds up database range queries?", "expected_pages": [6], "expected_keywords": ["B-tree"], "expected_tools": ["retrieve"]},
+  {"id": 12, "question": "What do ACID transactions guarantee?", "expected_pages": [6], "expected_keywords": ["atomicity"], "expected_tools": ["retrieve"]},
+  {"id": 13, "question": "Summarize the page about the French Revolution", "expected_pages": [7], "expected_keywords": ["Bastille", "1789"], "expected_tools": ["retrieve", "summarize"]},
+  {"id": 14, "question": "Give me a brief summary of quantum mechanics principles", "expected_pages": [8], "expected_keywords": ["Superposition", "uncertainty"], "expected_tools": ["retrieve", "summarize"]},
+  {"id": 15, "question": "Summarize how supply and demand affect prices", "expected_pages": [9], "expected_keywords": ["equilibrium"], "expected_tools": ["retrieve", "summarize"]},
+  {"id": 16, "question": "Summarize the differences between TCP and UDP", "expected_pages": [10], "expected_keywords": ["TCP", "UDP"], "expected_tools": ["retrieve", "summarize"]},
+  {"id": 17, "question": "Compare photosynthesis and cellular respiration", "expected_pages": [1, 2], "expected_keywords": ["chloroplasts", "Mitochondria"], "expected_tools": ["retrieve", "compare"]},
+  {"id": 18, "question": "Compare TCP versus UDP for streaming", "expected_pages": [10], "expected_keywords": ["TCP", "UDP"], "expected_tools": ["retrieve", "compare"]},
+  {"id": 19, "question": "What is the difference between evaporation and precipitation?", "expected_pages": [4], "expected_keywords": ["evaporation", "Precipitation"], "expected_tools": ["retrieve", "compare"]},
+  {"id": 20, "question": "Contrast B-tree indexes with full table scans", "expected_pages": [6], "expected_keywords": ["B-tree"], "expected_tools": ["retrieve", "compare"]}
+]
