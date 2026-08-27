@@ -12,6 +12,7 @@ import ChatTab from "./components/ChatTab";
 import QuizTab from "./components/QuizTab";
 import MindMapTab from "./components/MindMapTab";
 import PodcastTab from "./components/PodcastTab";
+import { isAgenticEnabled, uploadDocument, waitForReady, askQuestion } from "./lib/agenticApi";
 
 // Worker Setup
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -28,6 +29,9 @@ function App() {
   const [messages, setMessages] = useState([{ role: 'bot', text: "Hi! Upload a PDF to unlock Chat, Quiz, Mind Maps & Podcasts!" }]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState('full');
+
+  // Agentic backend document id (Python/FastAPI). Null = legacy chat only.
+  const [docId, setDocId] = useState(null);
 
   // Crop State
   const [crop, setCrop] = useState();
@@ -56,6 +60,23 @@ function App() {
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData);
         setNumPages(res.data.totalPages);
         setMessages(prev => [...prev, { role: 'bot', text: `PDF Processed! Detected ${res.data.totalPages} pages.` }]);
+        // Also index into the agentic backend (non-blocking, legacy flow unaffected)
+        if (isAgenticEnabled()) {
+          uploadDocument(selectedFile)
+            .then((doc) => {
+              setMessages(prev => [...prev, { role: 'bot', text: `Indexing for traceable answers started…` }]);
+              return waitForReady(doc.document_id).then((s) => ({ doc, s }));
+            })
+            .then(({ doc, s }) => {
+              if (s.status === "ready") {
+                setDocId(doc.document_id);
+                setMessages(prev => [...prev, { role: 'bot', text: `Agentic index ready (${s.chunk_count} chunks, ${s.total_pages} pages). Answers will now include page citations.` }]);
+              } else {
+                setMessages(prev => [...prev, { role: 'bot', text: `Agentic indexing failed — using legacy chat.` }]);
+              }
+            })
+            .catch(() => { /* agentic backend offline: legacy chat keeps working */ });
+        }
       } catch (err) { alert("Upload failed"); } finally { setLoading(false); }
     }
   };
@@ -88,10 +109,20 @@ function App() {
         if (!base64) { alert("Select area first!"); setLoading(false); return; }
         response = await axios.post(`${import.meta.env.VITE_API_URL}/analyze-crop`, { image: base64, question: userMsg });
         setCrop(undefined);
+        setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
+      } else if (docId && isAgenticEnabled()) {
+        // Agentic Q&A: structured answer + page-level citations
+        try {
+          const data = await askQuestion(docId, userMsg);
+          setMessages(prev => [...prev, { role: "bot", text: data.answer, citations: data.citations }]);
+        } catch {
+          response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, { question: userMsg });
+          setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
+        }
       } else {
         response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, { question: userMsg });
+        setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
       }
-      setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
     } catch (error) { setMessages(prev => [...prev, { role: "bot", text: "Error fetching response." }]); } finally { setLoading(false); }
   };
 

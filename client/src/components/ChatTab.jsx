@@ -29,6 +29,15 @@ const ChatTab = ({ messages, input, setInput, handleSend, loading, mode, setMode
               <div className="prose prose-invert text-sm">
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
               </div>
+              {msg.citations?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {msg.citations.map((c, j) => (
+                    <span key={j} title={c.excerpt} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600/20 border border-blue-500/50 text-blue-300 cursor-help">
+                      p. {c.page}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
