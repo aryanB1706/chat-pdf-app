@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -12,7 +11,7 @@ import ChatTab from "./components/ChatTab";
 import QuizTab from "./components/QuizTab";
 import MindMapTab from "./components/MindMapTab";
 import PodcastTab from "./components/PodcastTab";
-import { isAgenticEnabled, uploadDocument, waitForReady, askQuestion } from "./lib/agenticApi";
+import { uploadDocument, waitForReady, askQuestion, generateQuiz as agenticQuiz, generateMindMap as agenticMindMap, generatePodcast as agenticPodcast, analyzeCrop as agenticCrop } from "./lib/agenticApi";
 
 // Worker Setup
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -53,29 +52,18 @@ function App() {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
       setPdfUrl(URL.createObjectURL(selectedFile));
-      const formData = new FormData();
-      formData.append("file", selectedFile);
+      setDocId(null);
       try {
         setLoading(true);
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData);
-        setNumPages(res.data.totalPages);
-        setMessages(prev => [...prev, { role: 'bot', text: `PDF Processed! Detected ${res.data.totalPages} pages.` }]);
-        // Also index into the agentic backend (non-blocking, legacy flow unaffected)
-        if (isAgenticEnabled()) {
-          uploadDocument(selectedFile)
-            .then((doc) => {
-              setMessages(prev => [...prev, { role: 'bot', text: `Indexing for traceable answers started…` }]);
-              return waitForReady(doc.document_id).then((s) => ({ doc, s }));
-            })
-            .then(({ doc, s }) => {
-              if (s.status === "ready") {
-                setDocId(doc.document_id);
-                setMessages(prev => [...prev, { role: 'bot', text: `Agentic index ready (${s.chunk_count} chunks, ${s.total_pages} pages). Answers will now include page citations.` }]);
-              } else {
-                setMessages(prev => [...prev, { role: 'bot', text: `Agentic indexing failed — using legacy chat.` }]);
-              }
-            })
-            .catch(() => { /* agentic backend offline: legacy chat keeps working */ });
+        const doc = await uploadDocument(selectedFile);
+        setMessages(prev => [...prev, { role: 'bot', text: `Upload done. Indexing ${selectedFile.name} for traceable answers…` }]);
+        const s = await waitForReady(doc.document_id);
+        if (s.status === "ready") {
+          setDocId(doc.document_id);
+          setNumPages(s.total_pages);
+          setMessages(prev => [...prev, { role: 'bot', text: `PDF ready! ${s.total_pages} pages, ${s.chunk_count} chunks indexed. Chat, Quiz, Mind Maps & Podcasts unlocked — answers include page citations.` }]);
+        } else {
+          setMessages(prev => [...prev, { role: 'bot', text: `Indexing failed: ${s.error || "unknown error"}. Try uploading again.` }]);
         }
       } catch (err) { alert("Upload failed"); } finally { setLoading(false); }
     }
@@ -97,58 +85,58 @@ function App() {
 
   const handleSend = async () => {
     if (!input.trim() && mode !== 'crop') return;
+    if (!docId) { setMessages(prev => [...prev, { role: 'bot', text: "Upload a PDF first — I'm still indexing." }]); return; }
     const userMsg = input;
     setMessages(prev => [...prev, { role: "user", text: userMsg || (mode === 'crop' ? "Analyze this selection" : "") }]);
     setInput("");
     setLoading(true);
 
     try {
-      let response;
       if (mode === 'crop') {
         const base64 = await getCroppedImg();
         if (!base64) { alert("Select area first!"); setLoading(false); return; }
-        response = await axios.post(`${import.meta.env.VITE_API_URL}/analyze-crop`, { image: base64, question: userMsg });
+        const data = await agenticCrop(base64, userMsg);
         setCrop(undefined);
-        setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
-      } else if (docId && isAgenticEnabled()) {
-        // Agentic Q&A: structured answer + page-level citations
-        try {
-          const data = await askQuestion(docId, userMsg);
-          setMessages(prev => [...prev, { role: "bot", text: data.answer, citations: data.citations }]);
-        } catch {
-          response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, { question: userMsg });
-          setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
-        }
+        setMessages(prev => [...prev, { role: "bot", text: data.reply }]);
       } else {
-        response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, { question: userMsg });
-        setMessages(prev => [...prev, { role: "bot", text: response.data.reply }]);
+        // Agentic Q&A: structured answer + page-level citations
+        const data = await askQuestion(docId, userMsg);
+        setMessages(prev => [...prev, { role: "bot", text: data.answer, citations: data.citations }]);
       }
     } catch (error) { setMessages(prev => [...prev, { role: "bot", text: "Error fetching response." }]); } finally { setLoading(false); }
   };
 
+  const needDoc = () => {
+    if (!docId) { alert("Upload a PDF first — indexing still in progress."); return false; }
+    return true;
+  };
+
   const generateQuiz = async () => {
+    if (!needDoc()) return;
     setLoading(true);
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/quiz`);
-        setQuizData(res.data);
+        const data = await agenticQuiz(docId, 5);
+        setQuizData(data);
         setQuizAnswers({});
     } catch (err) { alert("Quiz Gen Error"); } finally { setLoading(false); }
   };
 
   const generateMindMap = async () => {
+    if (!needDoc()) return;
     setLoading(true);
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/mindmap`);
-        setMindMapNodes(res.data.nodes || []);
-        setMindMapEdges(res.data.edges || []);
+        const data = await agenticMindMap(docId);
+        setMindMapNodes(data.nodes || []);
+        setMindMapEdges(data.edges || []);
     } catch (err) { alert("Mind Map Error"); } finally { setLoading(false); }
   };
 
   const generatePodcast = async () => {
+    if (!needDoc()) return;
     setLoading(true);
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/podcast`, { language: podcastLang });
-        setPodcastScript(res.data.script);
+        const data = await agenticPodcast(docId, podcastLang);
+        setPodcastScript(data.script);
     } catch (err) { alert("Podcast Error"); } finally { setLoading(false); }
   };
 

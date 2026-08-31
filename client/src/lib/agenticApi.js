@@ -1,12 +1,9 @@
-// Client for the new Python/FastAPI agentic backend.
-// Set VITE_AGENTIC_API_URL to enable (e.g. http://localhost:8000/api/v1).
-// When unset, callers should fall back to the legacy Node API (VITE_API_URL).
+// Client for the Python/FastAPI agentic backend (the only backend).
+// VITE_AGENTIC_API_URL e.g. http://localhost:8000/api/v1 (dev default below).
 
 export const AGENTIC_BASE = (
-  import.meta.env.VITE_AGENTIC_API_URL || ""
+  import.meta.env.VITE_AGENTIC_API_URL || "http://localhost:8000/api/v1"
 ).replace(/\/$/, "");
-
-export const isAgenticEnabled = () => Boolean(AGENTIC_BASE);
 
 async function req(path, opts = {}) {
   const res = await fetch(`${AGENTIC_BASE}${path}`, opts);
@@ -47,3 +44,31 @@ export const askQuestion = (documentId, question, top_k = 5) =>
   });
 
 export const getStats = () => req("/stats");
+
+export const generateQuiz = (documentId, num_questions = 5) =>
+  req("/quiz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document_id: documentId, num_questions }),
+  });
+
+export const generateMindMap = (documentId) =>
+  req("/mindmap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document_id: documentId }),
+  });
+
+export const generatePodcast = (documentId, language = "english") =>
+  req("/podcast", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document_id: documentId, language }),
+  });
+
+export const analyzeCrop = (image, question) =>
+  req("/analyze-crop", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image, question: question || "Explain this image." }),
+  });

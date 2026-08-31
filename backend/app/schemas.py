@@ -72,3 +72,44 @@ class StatsOut(BaseModel):
     avg_latency_ms: float
     est_tokens_total: int
     est_tokens_saved_by_cache: int
+
+
+# --- Studio (quiz / mindmap / podcast / crop) — mirrors legacy shapes ---
+
+class QuizRequest(BaseModel):
+    document_id: uuid.UUID
+    num_questions: int = 5
+
+
+class QuizItem(BaseModel):
+    question: str
+    options: list[str]
+    answer: int
+    explanation: str
+
+
+class MindMapRequest(BaseModel):
+    document_id: uuid.UUID
+
+
+class MindMapResponse(BaseModel):
+    nodes: list[dict]
+    edges: list[dict]
+
+
+class PodcastRequest(BaseModel):
+    document_id: uuid.UUID
+    language: str = "english"
+
+
+class PodcastResponse(BaseModel):
+    script: str
+
+
+class CropRequest(BaseModel):
+    image: str  # data URL or raw base64
+    question: str = "Explain this image."
+
+
+class CropResponse(BaseModel):
+    reply: str
